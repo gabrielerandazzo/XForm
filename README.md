@@ -1,7 +1,7 @@
 # XForm
 A web-based interactive tool to visualize composite signals made of rectangular (`rect`) and triangular (`tri`) functions.   It parses a mathematical expression, generates the corresponding waveform, and plots it dynamically using Chart.js.
 
-## ❓ Why?
+## Why?
 
 This project was created as a **personal study tool** for understanding and visualizing concepts from *Signal Theory*.  
 When learning about signals, it can be challenging to correctly translate between a **mathematical expression** and its **graphical representation** — or vice versa.  
