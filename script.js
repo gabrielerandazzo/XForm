@@ -96,13 +96,16 @@ function parseFormula(formula) {
 
         if (match) {
             const ampRaw = match[1]
-            const amplitude = ampRaw === undefined || ampRaw === '' ? 1 : parseFloat(ampRaw)
+            const amplitude = ampRaw === undefined || ampRaw === "" ? 1 : parseFloat(ampRaw)
+            const centerRaw = match[3]
+            const center = centerRaw === undefined || centerRaw === "" ? 0 : parseFloat(centerRaw)
 
-            const centerRaw = match[4]
-            const center = centerRaw === undefined || centerRaw === '' ? 0 : parseFloat(centerRaw)
-            const param = parseFloat(match[5])
-
-            signals.push({ amplitude: amplitude, type: match[2].toLowerCase(), center: center, param: param })
+            signals.push({
+                amplitude: amplitude,
+                type: match[2].toLowerCase(),
+                center: center,
+                param: parseFloat(match[4]),
+            })
         } else {
             console.warn(`Sintassi non riconosciuta: "${part}"`)
         }
