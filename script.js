@@ -97,7 +97,7 @@ function parseFormula(formula) {
             const ampRaw = match[1]
             const amplitude = ampRaw === undefined || ampRaw === "" ? 1 : parseFloat(ampRaw)
             const centerRaw = match[3]
-            const center = centerRaw === undefined || centerRaw === "" ? 0 : parseFloat(centerRaw)
+            const center = centerRaw === undefined || centerRaw === "" ? 0 : -parseFloat(centerRaw)
 
             signals.push({
                 amplitude: amplitude,
