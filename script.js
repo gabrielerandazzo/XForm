@@ -101,7 +101,7 @@ function parseFormula(formula) {
             const type = match[2].toLowerCase()
             const varLetter = match[3]
             const centerRaw = match[4]
-            const center = centerRaw === undefined || centerRaw === '' ? 0 : parseFloat(centerRaw)
+            const center = centerRaw === undefined || centerRaw === '' ? 0 : -parseFloat(centerRaw)
             const param = parseFloat(match[5])
 
             signals.push({ amplitude, type, center, param, variable: varLetter })
