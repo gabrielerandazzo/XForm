@@ -1,0 +1,55 @@
+html,
+body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 1 auto;
+    position: relative;
+}
+
+
+.theme-toggle-button {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+html[data-bs-theme="dark"] .sun-icon {
+    display: block;
+}
+
+html[data-bs-theme="dark"] .moon-icon {
+    display: none;
+}
+
+html:not([data-bs-theme="dark"]) .sun-icon {
+    display: none;
+}
+
+html:not([data-bs-theme="dark"]) .moon-icon {
+    display: block;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+}
+
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bs-dark-rgb: 43, 48, 53;
+    }
+}
