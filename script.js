@@ -75,36 +75,34 @@ function parseFormula(formula) {
     const signals = []
     if (!formula || !formula.trim()) return signals
 
-    const normalizedFormula = formula.replace(/\(f\)/g, "(f-0)")
-    const compact = normalizedFormula.replace(/\s+/g, "")
+    const normalizedFormula = formula.replace(/\(([fFtT])\)/g, (_, v) => `(${v.toLowerCase()}-0)`)
+    const compact = normalizedFormula.replace(/\s+/g, '').toLowerCase()
 
     const parts = splitTopLevel(compact)
 
-    const signalRegex = /^([+-]?\d+(?:\.\d+)?)?\*?(rect|tri)\(\(?f([+-]?\d+(?:\.\d+)?)?\)?\/(\d+(?:\.\d+)?)\)$/i;
+
+    const signalRegex = /^([+-]?\d+(?:\.\d+)?)?\*?(rect|tri)\(\(?([ft])([+-]?\d+(?:\.\d+)?)?\)?\/(\d+(?:\.\d+)?)\)$/;
 
     parts.forEach((part) => {
         if (!part) return
+        let p = part.replace(/\s+/g, '')
 
-        let p = part.replace(/\s+/g, "")
 
-        if (/^[+-]?(?:rect|tri)/i.test(p)) {
-            p = p.replace(/^([+-]?)(?=(rect|tri))/i, "$11*")
+        if (/^[+-]?(?:rect|tri)/.test(p)) {
+            p = p.replace(/^([+-]?)(?=(rect|tri))/, '$11*')
         }
 
         const match = p.match(signalRegex)
 
         if (match) {
             const ampRaw = match[1]
-            const amplitude = ampRaw === undefined || ampRaw === "" ? 1 : parseFloat(ampRaw)
-            const centerRaw = match[3]
-            const center = centerRaw === undefined || centerRaw === "" ? 0 : parseFloat(centerRaw)
+            const amplitude = ampRaw === undefined || ampRaw === '' ? 1 : parseFloat(ampRaw)
 
-            signals.push({
-                amplitude: amplitude,
-                type: match[2].toLowerCase(),
-                center: center,
-                param: parseFloat(match[4]),
-            })
+            const centerRaw = match[4]
+            const center = centerRaw === undefined || centerRaw === '' ? 0 : parseFloat(centerRaw)
+            const param = parseFloat(match[5])
+
+            signals.push({ amplitude: amplitude, type: match[2].toLowerCase(), center: center, param: param })
         } else {
             console.warn(`Sintassi non riconosciuta: "${part}"`)
         }
