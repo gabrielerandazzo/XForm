@@ -20,6 +20,9 @@ They often represent time- or frequency-domain components used to model filters,
 
 By combining and scaling these elementary signals with different amplitudes, centers, and widths, this tool allows the visualization of **composite spectral shapes**, illustrating how signals add up linearly in Fourier synthesis and how their analytical forms relate to their graphical behavior.
 
+## Contributing
+
+Contributions are welcome. If you’d like to improve XForm, fix a bug, or add a new feature, feel free to open an issue or submit a pull request.
 
 ## License
 
