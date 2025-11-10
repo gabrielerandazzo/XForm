@@ -1,6 +1,8 @@
 # [XForm](https://gabrielerandazzo.github.io/XForm/)  
 A web-based interactive tool to visualize composite signals made of rectangular (`rect`) and triangular (`tri`) functions.   It parses a mathematical expression, generates the corresponding waveform, and plots it dynamically using Chart.js.
 
+![https://gabrielerandazzo.github.io/XForm/](images/screenshot.png)
+
 ## Why?
 
 This project was created as a **personal study tool** for understanding and visualizing concepts from *Signal Theory*.  
