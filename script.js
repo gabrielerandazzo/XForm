@@ -12,7 +12,7 @@ if (themeToggleButton) {
         const newTheme = currentTheme === "dark" ? "light" : "dark"
         applyTheme(newTheme)
     }
-    themeToggleButton.addEventListener('click', toggleTheme);
+    themeToggleButton.addEventListener('click', toggleTheme)
     const savedTheme = localStorage.getItem("theme") ||
         (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
     applyTheme(savedTheme)
@@ -35,153 +35,234 @@ if (resetZoomButton) {
     })
 }
 
-function splitTopLevel(expr) {
-    const parts = []
-    let buf = ""
-    let depth = 0
+function rect(x, width) {
+    return Math.abs(x) <= width / 2 ? 1 : 0
+}
 
-    for (let i = 0; i < expr.length; i++) {
-        const ch = expr[i]
+function tri(x, width) {
+    return Math.abs(x) <= width ? (1 - Math.abs(x) / width) : 0
+}
 
-        if (ch === "(") {
-            depth++
-            buf += ch
-            continue
-        }
-        if (ch === ")") {
-            depth = Math.max(0, depth - 1)
-            buf += ch
-            continue
-        }
-        if ((ch === "+" || ch === "-") && depth === 0) {
-            if (buf !== "") {
-                parts.push(buf)
-                buf = ch
-                continue
+function sinc(x) {
+    if (Math.abs(x) < 1e-10) return 1
+
+    const arg = Math.PI * x
+    return Math.sin(arg) / arg
+}
+
+function gauss(x) {
+    return Math.exp(-x * x)
+}
+
+function exp(x) {
+    return Math.exp(-Math.abs(x))
+}
+
+function step(x) {
+    if (x > 0) {
+        return 1
+    } else if (x < 0) {
+        return 0
+    } else {
+        return 0.5
+    }
+}
+
+function delta(x, epsilon = 0.1) {
+    return Math.abs(x) < epsilon ? 1 / (2 * epsilon) : 0
+}
+
+
+function parse(f) {
+    const state = {
+        expr: f.replace(/\s+/g, '').toLowerCase(),
+        pos: 0
+    }
+    return parseAddSub(state)
+}
+
+function parseAddSub(state) {
+    let left = parseMulDiv(state)
+
+    while (state.pos < state.expr.length) {
+        const ch = state.expr[state.pos]
+
+        if (ch === '+' || ch === '-') {
+            state.pos++
+
+            const right = parseMulDiv(state)
+            const op = ch
+            const leftFunc = left
+            const rightFunc = right
+
+            left = (f) => {
+                const l = leftFunc(f)
+                const r = rightFunc(f)
+                return op === '+' ? l + r : l - r
             }
-            buf = ch
-            continue
+        } else {
+            break
         }
-        buf += ch
     }
-
-    if (buf !== "") parts.push(buf)
-    console.log("parts:", parts)
-    return parts
+    return left
 }
 
 
-function parseFormula(formula) {
-    const signals = []
-    if (!formula || !formula.trim()) return signals
+function parseMulDiv(state) {
+    let left = parseUnary(state)
+    while (state.pos < state.expr.length) {
+        const ch = state.expr[state.pos]
 
+        if (ch === '*' || ch === "/") {
+            state.pos++
+            const right = parseUnary(state)
 
-    const normalizedFormula = formula.replace(/\(([fFtT])\)/g, (_, v) => `(${v.toLowerCase()}-0)`)
-    const compact = normalizedFormula.replace(/\s+/g, '').toLowerCase()
+            const op = ch
+            const leftFunc = left
+            const rightFunc = right
 
-    const parts = splitTopLevel(compact)
+            left = (f) => {
+                const l = leftFunc(f)
+                const r = rightFunc(f)
 
-
-    const signalRegex = /^([+-]?\d+(?:\.\d+)?)?\*?(rect|tri)\(\(?([ft])([+-]?\d+(?:\.\d+)?)?\)?\/(\d+(?:\.\d+)?)\)$/;
-
-    parts.forEach((part) => {
-        if (!part) return
-        let p = part.replace(/\s+/g, '')
-
-
-        if (/^[+-]?(?:rect|tri)/.test(p)) {
-            p = p.replace(/^([+-]?)(?=(rect|tri))/, '$11*')
-        }
-
-        const match = p.match(signalRegex)
-
-        if (match) {
-            const ampRaw = match[1]
-            const amplitude = ampRaw === undefined || ampRaw === '' ? 1 : parseFloat(ampRaw)
-            const type = match[2].toLowerCase()
-            const varLetter = match[3]
-            const centerRaw = match[4]
-            const center = centerRaw === undefined || centerRaw === '' ? 0 : -parseFloat(centerRaw)
-            const param = parseFloat(match[5])
-
-            signals.push({ amplitude, type, center, param, variable: varLetter })
-        } else {
-            console.warn(`Sintassi non riconosciuta: "${part}"`)
-        }
-    })
-
-    return signals
-}
-
-function generateDataPointsFromFormula(signals) {
-    if (signals.length === 0) {
-        return { data: [], minF: -30, maxF: 30, area: 0 }
-    }
-
-    let minF = 0
-    let maxF = 0
-
-    signals.forEach(s => {
-        let halfWidth = 0
-        if (s.type === "rect") {
-            halfWidth = s.param / 2
-        } else {
-            halfWidth = s.param
-        }
-        minF = Math.min(minF, s.center - halfWidth)
-        maxF = Math.max(maxF, s.center + halfWidth)
-    })
-    const padding = Math.max(10, (maxF - minF) * 0.2)
-    minF -= padding
-    maxF += padding
-
-    const data = []
-    const step = (maxF - minF) / 4000
-
-    let area = 0
-    let lastY = 0
-
-    for (let f = minF; f <= maxF; f += step) {
-        let y = 0
-
-        signals.forEach(s => {
-            const halfWidth = s.type === "rect" ? s.param / 2 : s.param
-            const relativeF = f - s.center
-
-            if (s.type === "rect") {
-                if (Math.abs(relativeF) <= halfWidth) {
-                    y += s.amplitude
-                }
-            } else if (s.type === "tri") {
-                if (Math.abs(relativeF) <= halfWidth) {
-                    y += s.amplitude * (1 - Math.abs(relativeF) / halfWidth)
-                }
+                return op === "*" ? l * r : l / r
             }
-        })
-
-        data.push({ x: f, y: y })
-
-
-        if (data.length > 1) {
-            area += (step * (Math.abs(lastY) + Math.abs(y))) / 2
+        } else {
+            break
         }
-        lastY = y
     }
-
-    return { data, minF, maxF, area: Math.round(area * 100) / 100 }
+    return left
 }
 
+
+function parseUnary(state) {
+    if (state.pos < state.expr.length && state.expr[state.pos] === "-") {
+        state.pos++
+        const operand = parseUnary(state)
+        return (f) => -operand(f)
+    }
+    return parsePrimary(state)
+}
+
+
+function parsePrimary(state) {
+    if (state.expr[state.pos] === "(") {
+        state.pos++
+        const exprRes = parseAddSub(state)
+
+        if (state.expr[state.pos] === ")") {
+            state.pos++
+        }
+        return exprRes
+    }
+
+    if (/[\d.]/.test(state.expr[state.pos])) {
+        return parseNumber(state)
+    }
+
+    if (/[a-z]/.test(state.expr[state.pos])) {
+        return parseFunction(state)
+    }
+
+    return (f) => 0
+}
+
+
+function parseNumber(state) {
+    let numStr = ""
+
+    while (state.pos < state.expr.length && /[\d.]/.test(state.expr[state.pos])) {
+        numStr += state.expr[state.pos]
+        state.pos++
+    }
+
+    const value = parseFloat(numStr)
+    return (f) => value
+}
+
+
+function parseFunction(state) {
+    let funcName = ""
+
+    while (state.pos < state.expr.length && /[a-z]/.test(state.expr[state.pos])) {
+        funcName += state.expr[state.pos]
+        state.pos++
+    }
+
+    if (funcName === "f" || funcName === "t") return (f) => f
+
+    if (funcName === "pi") return () => Math.PI
+
+    if (state.expr[state.pos] === "(") {
+        state.pos++
+        const arg = parseAddSub(state)
+
+        if (state.expr[state.pos] === ")") {
+            state.pos++
+        }
+
+        switch (funcName) {
+            case 'rect':  return (f) => rect(arg(f), 1)
+            case 'tri':   return (f) => tri(arg(f), 1)
+            case 'sinc':  return (f) => sinc(arg(f))
+            case 'gauss': return (f) => gauss(arg(f))
+            case 'exp':   return (f) => exp(arg(f))
+            case 'step':  return (f) => step(arg(f))
+            case 'delta': return (f) => delta(arg(f))
+            case 'sin':   return (f) => Math.sin(arg(f))
+            case 'cos':   return (f) => Math.cos(arg(f))
+            case 'tan':   return (f) => Math.tan(arg(f))
+            case 'abs':   return (f) => Math.abs(arg(f))
+            case 'sqrt':  return (f) => Math.sqrt(arg(f))
+            default:      return (f) => 0
+        }
+    }
+    return (f) => 0
+}
+
+function generateDataPointsFromFormula(formula) {
+    if (!formula || !formula.trim()) {
+        return { data: [], minF: -10, maxF: 10, area: 0 }
+    }
+
+    try {
+        const evalFunc = parse(formula)
+        let minF = -10
+        let maxF = 10
+
+        const data = []
+        const step = (maxF - minF) / 4000
+        let area = 0
+        let lastY = 0
+
+        for (let f = minF; f <= maxF; f += step) {
+            const y = evalFunc(f)
+
+            if (!isFinite(y)) continue
+
+            data.push({ x: f, y: y })
+
+            if (data.length > 1) {
+                area += (step * (Math.abs(lastY) + Math.abs(y))) / 2
+            }
+            lastY = y
+        }
+
+        return { data, minF, maxF, area: Math.round(area * 100) / 100 }
+    } catch (error) {
+        console.error("Errore nel parsing:", error)
+        return { data: [], minF: -10, maxF: 10, area: 0 }
+    }
+}
 
 const signalChart = new Chart(ctx, {
     type: "scatter",
     data: { datasets: [] },
-
     options: {
         responsive: true,
         maintainAspectRatio: false
     }
-});
-
+})
 
 function updateChart(config) {
     Object.assign(signalChart.options, config.options)
@@ -189,30 +270,32 @@ function updateChart(config) {
     signalChart.update()
 }
 
+
 function drawSignalFromText() {
-    isInteractiveMode = false;
+    isInteractiveMode = false
 
     if (formulaCard) {
-        formulaCard.style.display = '';
+        formulaCard.style.display = ''
     }
 
-    const signals = parseFormula(functionInput.value);
-    const { data, minF, maxF, area } = generateDataPointsFromFormula(signals);
+    const formula = functionInput.value
+    const { data, minF, maxF, area } = generateDataPointsFromFormula(formula)
+
     updateChart({
         data: {
             datasets: [{
-                label: `S(f) da Formula [Area: ${area}]`,
+                label: `S(f) [Area: ${area}]`,
                 data,
                 borderColor: 'rgb(0, 123, 255)',
                 borderWidth: 3,
                 showLine: true,
                 pointRadius: 0,
-                tension: 0.1,
-                stepped: signals.some(s => s.type === 'rect')
+                tension: 0.1
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 x: {
                     min: minF, max: maxF,
@@ -251,10 +334,9 @@ function drawSignalFromText() {
                 legend: { display: true }
             }
         }
-    });
+    })
 }
 
 plotButton.addEventListener('click', drawSignalFromText)
-
 
 drawSignalFromText()
