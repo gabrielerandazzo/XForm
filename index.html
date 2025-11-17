@@ -22,7 +22,7 @@
     <main class="d-flex flex-column">
         <header class="text-center p-4">
             <h1 class="display-4">XForm</h1>
-            <p class="lead">Visualize Composite Signals from Analytical Formulas.</p>
+            <p class="lead">Visualize Elementary and Composite Signals from Analytical Formulas.</p>
         </header>
 
 
@@ -53,12 +53,15 @@
                 <div class="col-12 col-md-8 mx-auto">
                     <div class="card shadow-sm">
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title text-center mb-3">From Text to Graph</h5>
+                            <h5 class="card-title text-center mb-3">Enter Formula to Visualize Signal</h5>
                             <div class="mb-3">
                                 <label for="functionInput" class="form-label small text-center d-block">
-                                    Syntax: <code>rect(t/W)</code> [W=Width] | <code>tri(t/Z)</code>
-                                    [Z=Half-Width]
+                                    Syntax: <code>rect(f/W)</code> [W=Width] | <code>tri(f/Z)</code> [Z=Half-Width] |
+                                    <code>sinc(f)</code>, <code>gauss(f)</code>, <code>exp(f)</code>,
+                                    <code>step(f)</code>, <code>delta(f)</code>, <code>sin(f)</code>,
+                                    <code>cos(f)</code>, <code>tan(f)</code>, <code>abs(f)</code>, <code>sqrt(f)</code>
                                 </label>
+
 
                                 <textarea class="form-control font-monospace" id="functionInput"
                                     rows="4">10*tri(f/10)-5*tri(f/5)-5*rect(f/10)+5*tri(f/5)</textarea>

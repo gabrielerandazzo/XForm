@@ -338,7 +338,7 @@ function drawSignalFromText() {
                 y: {
                     title: {
                         display: true,
-                        text: 'Ampiezza'
+                        text: 'Amplitude'
                     }
                 }
             },
