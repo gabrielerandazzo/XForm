@@ -202,19 +202,19 @@ function parseFunction(state) {
         }
 
         switch (funcName) {
-            case 'rect':  return (f) => rect(arg(f), 1)
-            case 'tri':   return (f) => tri(arg(f), 1)
-            case 'sinc':  return (f) => sinc(arg(f))
+            case 'rect': return (f) => rect(arg(f), 1)
+            case 'tri': return (f) => tri(arg(f), 1)
+            case 'sinc': return (f) => sinc(arg(f))
             case 'gauss': return (f) => gauss(arg(f))
-            case 'exp':   return (f) => exp(arg(f))
-            case 'step':  return (f) => step(arg(f))
+            case 'exp': return (f) => exp(arg(f))
+            case 'step': return (f) => step(arg(f))
             case 'delta': return (f) => delta(arg(f))
-            case 'sin':   return (f) => Math.sin(arg(f))
-            case 'cos':   return (f) => Math.cos(arg(f))
-            case 'tan':   return (f) => Math.tan(arg(f))
-            case 'abs':   return (f) => Math.abs(arg(f))
-            case 'sqrt':  return (f) => Math.sqrt(arg(f))
-            default:      return (f) => 0
+            case 'sin': return (f) => Math.sin(arg(f))
+            case 'cos': return (f) => Math.cos(arg(f))
+            case 'tan': return (f) => Math.tan(arg(f))
+            case 'abs': return (f) => Math.abs(arg(f))
+            case 'sqrt': return (f) => Math.sqrt(arg(f))
+            default: return (f) => 0
         }
     }
     return (f) => 0
@@ -227,15 +227,18 @@ function generateDataPointsFromFormula(formula) {
 
     try {
         const evalFunc = parse(formula)
-        let minF = -10
-        let maxF = 10
+
+
+        const searchMin = -100
+        const searchMax = 100
+        const totalPoints = 8000
 
         const data = []
-        const step = (maxF - minF) / 4000
+        const step = (searchMax - searchMin) / totalPoints
         let area = 0
         let lastY = 0
 
-        for (let f = minF; f <= maxF; f += step) {
+        for (let f = searchMin; f <= searchMax; f += step) {
             const y = evalFunc(f)
 
             if (!isFinite(y)) continue
@@ -248,7 +251,38 @@ function generateDataPointsFromFormula(formula) {
             lastY = y
         }
 
+        const threshold = 1e-4
+        let firstIndex = -1
+        let lastIndex = -1
+
+        for (let i = 0; i < data.length; i++) {
+            if (Math.abs(data[i].y) > threshold) {
+                if (firstIndex === -1) {
+                    firstIndex = i
+                }
+                lastIndex = i
+            }
+        }
+
+        let minF, maxF
+
+        if (firstIndex !== -1) {
+            minF = data[firstIndex].x
+            maxF = data[lastIndex].x
+
+            const range = maxF - minF
+            const padding = (range < 1) ? 5 : range * 0.15
+
+            minF -= padding
+            maxF += padding
+        } else {
+            minF = -10
+            maxF = 10
+        }
+
+
         return { data, minF, maxF, area: Math.round(area * 100) / 100 }
+
     } catch (error) {
         console.error("Errore nel parsing:", error)
         return { data: [], minF: -10, maxF: 10, area: 0 }
